@@ -11,6 +11,7 @@ images = []
 classNames = []
 nameRepeater = []
 nameList2 = []
+nameCheck = []
 timeIn = {}
 timeOut = {
     "SIDDIQ" : 0,
@@ -38,7 +39,7 @@ def markAttendance(name):
         myDataList = f.readlines()
         nameList = []
         now = datetime.now()
-        actnow = int(now.strftime('%M'))
+        actnow = int(now.strftime('%H'))
 
         for line in myDataList:
             entry = line.split(',')
@@ -48,20 +49,20 @@ def markAttendance(name):
             now = datetime.now()
             dtString = now.strftime('%H:%M:%S')
             f.writelines(f'\n{name},{dtString}, IN')
-            timeIn[name] = int(now.strftime('%M'))
-            print(timeIn)
+            timeIn[name] = int(now.strftime('%H'))
+            # print(timeIn)
 
         if name in timeIn and actnow - timeIn[name] > 1:
             now = datetime.now()
             dtString = now.strftime('%H:%M:%S')
             f.writelines(f'\n{name},{dtString}, OUT')           
-            timeOut[name] = int(now.strftime('%M'))
-            print(timeOut)
+            timeOut[name] = int(now.strftime('%H'))
+            # print(timeOut)
             timeIn.pop(name)
-    print(actnow)
-    print(timeIn)
-    if name in timeIn:
-        print("-: ", timeIn[name] - actnow)
+    # print(actnow)
+    # print(timeIn)
+    # if name in timeIn:
+    #     print("-: ", timeIn[name] - actnow)
 
 
  
@@ -99,7 +100,19 @@ while True:
             cv2.rectangle(img,(x1,y2-35),(x2,y2),(0,255,0),cv2.FILLED)
             cv2.putText(img,name,(x1+6,y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
 
-            markAttendance(name)
+            # markAttendance(name)
+
+            nameCheck.append(name)
+            print(nameCheck)
+
+            if len(nameCheck) == 5:
+                    numName = nameCheck.count(name)
+                    if numName == 5:
+                        nameCheck.clear()
+                        markAttendance(name)
+                    else:
+                        nameCheck.clear()
+
             # cv2.rectangle(img,(0,0),(x2,y2),(0,255,0),2)
             
         #     nameRepeater.append(name)
