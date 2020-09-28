@@ -4,8 +4,14 @@ import numpy as np
 import face_recognition
 import os
 from datetime import datetime
+import serial
+import time
 # from PIL import ImageGrab
  
+arduinoData = serial.Serial('COM10', 9600, timeout=.1)
+tempList = []
+tempCounts = 0
+
 path = 'ImagesAttendance'
 images = []
 classNames = []
@@ -33,13 +39,47 @@ def findEncodings(images):
         encode = face_recognition.face_encodings(img)[0]
         encodeList.append(encode)
     return encodeList
+
+
+def checkTemp():
+    while True:
+        val = arduinoData.readline().decode().strip('\r\n')
+        print(val)
+        
+        try:
+            if val != None:
+                if float(val) < 38:
+                    # print("val: ", val)
+                    tempList.append(val)
+
+                    if len(tempList) == 5:
+                        numName = tempList.count(val)
+                        if numName == 5:
+                            tempList.clear()
+                            markAttendance(name)
+                            return
+                        else:
+                            tempList.clear()
+                            tempCounts = tempCounts + 1
+                            if tempCounts > 5:
+                                tempCounts = 0
+                                return
+                else:
+                    tempCounts = tempCounts + 1
+                    if tempCounts > 5:
+                        tempCounts = 0
+                        return
+
+        except:
+            a = 0
+
  
 def markAttendance(name):
     with open('Attendance.csv','r+') as f:
         myDataList = f.readlines()
         nameList = []
         now = datetime.now()
-        actnow = int(now.strftime('%H'))
+        actnow = int(now.strftime('%M'))
 
         for line in myDataList:
             entry = line.split(',')
@@ -49,14 +89,14 @@ def markAttendance(name):
             now = datetime.now()
             dtString = now.strftime('%H:%M:%S')
             f.writelines(f'\n{name},{dtString}, IN')
-            timeIn[name] = int(now.strftime('%H'))
+            timeIn[name] = int(now.strftime('%M'))
             # print(timeIn)
 
         if name in timeIn and actnow - timeIn[name] > 1:
             now = datetime.now()
             dtString = now.strftime('%H:%M:%S')
             f.writelines(f'\n{name},{dtString}, OUT')           
-            timeOut[name] = int(now.strftime('%H'))
+            timeOut[name] = int(now.strftime('%M'))
             # print(timeOut)
             timeIn.pop(name)
     # print(actnow)
@@ -109,7 +149,8 @@ while True:
                     numName = nameCheck.count(name)
                     if numName == 5:
                         nameCheck.clear()
-                        markAttendance(name)
+                        # check temp of the person
+                        checkTemp()
                     else:
                         nameCheck.clear()
 
