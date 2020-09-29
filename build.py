@@ -12,6 +12,8 @@ arduinoData = serial.Serial('COM10', 9600, timeout=.1)
 tempList = []
 tempCounts = 0
 
+showMessage = True
+
 path = 'ImagesAttendance'
 images = []
 classNames = []
@@ -57,6 +59,7 @@ def checkTemp():
                         if numName == 5:
                             tempList.clear()
                             markAttendance(name)
+                            showMessage = False
                             return
                         else:
                             tempList.clear()
@@ -99,11 +102,14 @@ def markAttendance(name):
             timeOut[name] = int(now.strftime('%M'))
             # print(timeOut)
             timeIn.pop(name)
-    # print(actnow)
-    # print(timeIn)
-    # if name in timeIn:
-    #     print("-: ", timeIn[name] - actnow)
 
+def textShow(text):
+    font                   = cv2.FONT_HERSHEY_COMPLEX
+    topLeftCornerOfText = (10,50)
+    fontScale              = 1
+    fontColor              = (255,255,255)
+    lineType               = 2
+    cv2.putText(img, text, topLeftCornerOfText, font, fontScale, fontColor, lineType)
 
  
 #### FOR CAPTURING SCREEN RATHER THAN WEBCAM
@@ -116,12 +122,17 @@ encodeListKnown = findEncodings(images)
 print('Encoding Complete')
  
 cap = cv2.VideoCapture(0)
- 
+
+if cap.isOpened():
+    h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
+    w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
+
 while True:
     success, img = cap.read()
     #img = captureScreen()
     imgS = cv2.resize(img,(0,0),None,0.25,0.25)
     imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
+
  
     facesCurFrame = face_recognition.face_locations(imgS)
     encodesCurFrame = face_recognition.face_encodings(imgS,facesCurFrame)
@@ -145,6 +156,15 @@ while True:
             nameCheck.append(name)
             print(nameCheck)
 
+            cv2.putText(img, "Hello, " + name, topLeftCornerOfText, font, fontScale, fontColor, lineType)
+
+            if showMessage:
+                cv2.putText(img, "Keep Your Hand In Front The Sensor", (10, 100), font, 0.5, fontColor, lineType)
+            else:
+                cv2.putText(img, "DONE", (10, 100), font, 0.5, fontColor, lineType)
+                time.sleep(2)
+                showMessage = True
+
             if len(nameCheck) == 5:
                     numName = nameCheck.count(name)
                     if numName == 5:
@@ -154,21 +174,6 @@ while True:
                     else:
                         nameCheck.clear()
 
-            # cv2.rectangle(img,(0,0),(x2,y2),(0,255,0),2)
-            
-        #     nameRepeater.append(name)
-        #     print(nameRepeater)
-        #     if len(nameRepeater) > 8:
-        #         count = nameRepeater.count(nameRepeater[0])
-        #         print("count", count)
-        #         if count == len(nameRepeater):
-        #             markAttendance(name)
-        #             count = 0
-        #         else:
-        #             nameRepeater.clear()
-        # else:
-        #     nameRepeater.clear()
- 
     cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
     cv2.setWindowProperty("window",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
     cv2.imshow('window', img)
