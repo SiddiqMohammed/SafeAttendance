@@ -11,8 +11,7 @@ import time
 arduinoData = serial.Serial('COM10', 9600, timeout=.1)
 tempList = []
 tempCounts = 0
-
-showMessage = True
+textState = 0
 
 path = 'ImagesAttendance'
 images = []
@@ -44,13 +43,20 @@ def findEncodings(images):
 
 
 def checkTemp():
+    global tempCounts
+    global textState
     while True:
+        # cv2.putText(img, "Check you temp", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
+        
         val = arduinoData.readline().decode().strip('\r\n')
-        print(val)
+        # print(val)
         
         try:
             if val != None:
-                if float(val) < 38:
+                val = int(float(val))
+                # print(type(val))
+                print(val)
+                if val < 36:
                     # print("val: ", val)
                     tempList.append(val)
 
@@ -59,7 +65,6 @@ def checkTemp():
                         if numName == 5:
                             tempList.clear()
                             markAttendance(name)
-                            showMessage = False
                             return
                         else:
                             tempList.clear()
@@ -68,9 +73,13 @@ def checkTemp():
                                 tempCounts = 0
                                 return
                 else:
+                    
                     tempCounts = tempCounts + 1
                     if tempCounts > 5:
                         tempCounts = 0
+
+                        # tempTooHigh()
+                        textState = 2
                         return
 
         except:
@@ -78,6 +87,9 @@ def checkTemp():
 
  
 def markAttendance(name):
+    # tempTextShow()
+    global textState
+    textState = 1
     with open('Attendance.csv','r+') as f:
         myDataList = f.readlines()
         nameList = []
@@ -103,14 +115,25 @@ def markAttendance(name):
             # print(timeOut)
             timeIn.pop(name)
 
-def textShow(text):
-    font                   = cv2.FONT_HERSHEY_COMPLEX
-    topLeftCornerOfText = (10,50)
-    fontScale              = 1
-    fontColor              = (255,255,255)
-    lineType               = 2
-    cv2.putText(img, text, topLeftCornerOfText, font, fontScale, fontColor, lineType)
+def nameShow(text):
+    global textState
+    if textState == 0:
+        cv2.putText(img, "Hello, " + text, (10,50), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
+        cv2.putText(img, "Check you temp", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
+    elif textState == 1:
+        cv2.putText(img, "DONE", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
+        # time.sleep(5)
+        # textState = 0
+    elif textState == 2:    
+        cv2.putText(img, "Your Temperature Is Too High!", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
+        # time.sleep(5)
+        # textState = 0
 
+    
+# def tempTextShow():
+
+# def tempTooHigh():
+    
  
 #### FOR CAPTURING SCREEN RATHER THAN WEBCAM
 # def captureScreen(bbox=(300,300,690+300,530+300)):
@@ -156,20 +179,17 @@ while True:
             nameCheck.append(name)
             print(nameCheck)
 
-            cv2.putText(img, "Hello, " + name, topLeftCornerOfText, font, fontScale, fontColor, lineType)
+            nameShow(name)
+            # textShow("HELLO")
 
-            if showMessage:
-                cv2.putText(img, "Keep Your Hand In Front The Sensor", (10, 100), font, 0.5, fontColor, lineType)
-            else:
-                cv2.putText(img, "DONE", (10, 100), font, 0.5, fontColor, lineType)
-                time.sleep(2)
-                showMessage = True
+
 
             if len(nameCheck) == 5:
                     numName = nameCheck.count(name)
                     if numName == 5:
                         nameCheck.clear()
                         # check temp of the person
+                        # tempTextShow()
                         checkTemp()
                     else:
                         nameCheck.clear()
