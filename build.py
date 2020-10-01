@@ -47,56 +47,8 @@ def findEncodings(images):
         encodeList.append(encode)
     return encodeList
 
-
-def checkTemp():
-    global tempCounts
-    global textState
-    global start
-    while True:
-        # cv2.putText(img, "Check you temp", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
-        
-        val = arduinoData.readline().decode().strip('\r\n')
-        # print(val)
-        
-        try:
-            if val != None:
-                val = int(float(val))
-                # print(type(val))
-                print(val)
-                if val < 36 and val > 30:
-                    # print("val: ", val)
-                    tempList.append(val)
-
-                    if len(tempList) == 5:
-                        numName = tempList.count(val)
-                        if numName == 5:
-                            tempList.clear()
-                            markAttendance(name)
-                            return
-                        else:
-                            tempList.clear()
-                            tempCounts = tempCounts + 1
-                            if tempCounts > 5:
-                                tempCounts = 0
-                                return
-                else:
-                    
-                    tempCounts = tempCounts + 1
-                    if tempCounts > 5:
-                        tempCounts = 0
-
-                        # tempTooHigh()
-                        textState = 2
-                        
-
-                        return
-
-        except:
-            a = 0
-
  
 def markAttendance(name):
-    # tempTextShow()
     global textState
     textState = 1
 
@@ -136,7 +88,6 @@ def nameShow(text):
         cv2.putText(img, "Check you temp", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
     elif textState == 1:
         cv2.putText(img, "DONE", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
-        # time.sleep(5)
         # textState = 0
 
         final = time.perf_counter()
@@ -147,7 +98,6 @@ def nameShow(text):
 
     elif textState == 2:    
         cv2.putText(img, "Your Temperature Is Too High!", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
-        # time.sleep(5)
         # textState = 0
 
     
@@ -155,15 +105,7 @@ def newTemp():
     E = arduinoData.readline().decode().strip('\r\n')
     return E
 
-# def tempTooHigh():
-    
- 
-#### FOR CAPTURING SCREEN RATHER THAN WEBCAM
-# def captureScreen(bbox=(300,300,690+300,530+300)):
-#     capScr = np.array(ImageGrab.grab(bbox))
-#     capScr = cv2.cvtColor(capScr, cv2.COLOR_RGB2BGR)
-#     return capScr
- 
+
 encodeListKnown = findEncodings(images)
 print('Encoding Complete')
  
@@ -183,7 +125,6 @@ while True:
     imgS = cv2.resize(img,(0,0),None,0.25,0.25)
     imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
 
-    # E = arduinoData.readline().decode().strip('\r\n')
  
     facesCurFrame = face_recognition.face_locations(imgS)
     encodesCurFrame = face_recognition.face_encodings(imgS,facesCurFrame)
@@ -191,8 +132,7 @@ while True:
     # arduinoData = serial.Serial('COM10', 9600, timeout=.1)
     
 
-    # print(E)
-    # print(type(E))
+
 
     for encodeFace,faceLoc in zip(encodesCurFrame,facesCurFrame):
         matches = face_recognition.compare_faces(encodeListKnown,encodeFace)
@@ -208,26 +148,31 @@ while True:
             cv2.rectangle(img,(x1,y2-35),(x2,y2),(0,255,0),cv2.FILLED)
             cv2.putText(img,name,(x1+6,y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
 
-            # markAttendance(name)
+
+
+            if len(nameCheck) == 1:
+                start = time.perf_counter()
+                
+            final = time.perf_counter()
+
+
+            diff = final - start
+
+            # print(diff)
 
             nameCheck.append(name)
             print(nameCheck)
-
             nameShow(name)
-            
-            # E = newTemp()
 
-            # E = arduinoData.readline().decode().strip('\r\n')
-       
+            if diff > 10:
+                nameCheck.clear()
 
             if len(nameCheck) == 5:
                     numName = nameCheck.count(name)
                     if numName == 5:
                         nameCheck.clear()
-                        # print(E)
+
                         # check temp of the person
-                        # tempTextShow()
-                        # checkTemp()
                         isWhat = 0
                         while isWhat == 0:
 
