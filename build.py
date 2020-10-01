@@ -8,10 +8,14 @@ import serial
 import time
 # from PIL import ImageGrab
  
-arduinoData = serial.Serial('COM10', 9600, timeout=.1)
+# arduinoData = serial.Serial('COM10', 9600, timeout=.1)
 tempList = []
+mList = []
+tCheck = []
 tempCounts = 0
 textState = 0
+start = 0
+finish = 0
 
 path = 'ImagesAttendance'
 images = []
@@ -23,8 +27,21 @@ timeIn = {}
 timeOut = {
     "SIDDIQ" : 0,
     "ALEEM" : 0,
-    "CLYDE" : 0
+    "ANAM" : 0,
+    "ASHKAR" : 0,
+    "AYNA" : 0,
+    "CAROL" : 0,
+    "CLYDE" : 0,
+    "HUSAM" : 0,
+    "NABEEL" : 0,
+    "OMAR" : 0,
+    "REHAN" : 0,
+    "SIDRAH" : 0,
+    "SYED" : 0,
+    "TAREK" : 0,
+    "VALENTINA" : 0
 }
+
 myList = os.listdir(path)
 print(myList)
 for cl in myList:
@@ -45,6 +62,7 @@ def findEncodings(images):
 def checkTemp():
     global tempCounts
     global textState
+    global start
     while True:
         # cv2.putText(img, "Check you temp", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
         
@@ -56,7 +74,7 @@ def checkTemp():
                 val = int(float(val))
                 # print(type(val))
                 print(val)
-                if val < 36:
+                if val < 36 and val > 30:
                     # print("val: ", val)
                     tempList.append(val)
 
@@ -80,6 +98,8 @@ def checkTemp():
 
                         # tempTooHigh()
                         textState = 2
+                        
+
                         return
 
         except:
@@ -90,6 +110,9 @@ def markAttendance(name):
     # tempTextShow()
     global textState
     textState = 1
+
+    start = time.perf_counter()
+
     with open('Attendance.csv','r+') as f:
         myDataList = f.readlines()
         nameList = []
@@ -117,6 +140,8 @@ def markAttendance(name):
 
 def nameShow(text):
     global textState
+    global start
+    
     if textState == 0:
         cv2.putText(img, "Hello, " + text, (10,50), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
         cv2.putText(img, "Check you temp", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
@@ -124,13 +149,22 @@ def nameShow(text):
         cv2.putText(img, "DONE", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
         # time.sleep(5)
         # textState = 0
+
+        final = time.perf_counter()
+
+        if final - start > 2:
+            textState = 0
+
+
     elif textState == 2:    
         cv2.putText(img, "Your Temperature Is Too High!", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
         # time.sleep(5)
         # textState = 0
 
     
-# def tempTextShow():
+def newTemp():
+    E = arduinoData.readline().decode().strip('\r\n')
+    return E
 
 # def tempTooHigh():
     
@@ -150,16 +184,27 @@ if cap.isOpened():
     h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
     w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
 
+arduinoData = serial.Serial('COM10', 9600, timeout=.1)
+
 while True:
+    # global tempCounts
+    # global textState
     success, img = cap.read()
     #img = captureScreen()
     imgS = cv2.resize(img,(0,0),None,0.25,0.25)
     imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
 
+    # E = arduinoData.readline().decode().strip('\r\n')
  
     facesCurFrame = face_recognition.face_locations(imgS)
     encodesCurFrame = face_recognition.face_encodings(imgS,facesCurFrame)
+
+    # arduinoData = serial.Serial('COM10', 9600, timeout=.1)
     
+
+    # print(E)
+    # print(type(E))
+
     for encodeFace,faceLoc in zip(encodesCurFrame,facesCurFrame):
         matches = face_recognition.compare_faces(encodeListKnown,encodeFace)
         faceDis = face_recognition.face_distance(encodeListKnown,encodeFace)
@@ -180,24 +225,54 @@ while True:
             print(nameCheck)
 
             nameShow(name)
-            # textShow("HELLO")
+            
+            # E = newTemp()
 
-
+            # E = arduinoData.readline().decode().strip('\r\n')
+       
 
             if len(nameCheck) == 5:
                     numName = nameCheck.count(name)
                     if numName == 5:
                         nameCheck.clear()
+                        # print(E)
                         # check temp of the person
                         # tempTextShow()
-                        checkTemp()
+                        # checkTemp()
+                        isWhat = 0
+                        while isWhat == 0:
+
+                            E = arduinoData.readline().decode().strip('\r\n')
+                            # TEMP > 35
+                            if E == "1": 
+                                print("High Temp")
+                                # tCheck.append(E)
+                                tCheck.clear()
+                            elif E == "2":
+                                print("No Reading")
+                                # tCheck.append(E)
+                                tCheck.clear()
+                            elif E == "3":
+                                # markAttendance(name)
+                                tCheck.append(E)
+                                print("Good to go")
+
+                            if len(tCheck) == 25:
+                                isWhat = 1
+                                tCheck.clear()
+                                markAttendance(name)
+                                print("marked")
+                            # print(tCheck)
+
+
                     else:
                         nameCheck.clear()
 
     cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
     cv2.setWindowProperty("window",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
     cv2.imshow('window', img)
-
+    
+    mList.clear()
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
