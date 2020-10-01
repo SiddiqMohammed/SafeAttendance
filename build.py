@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 import serial
 import time
+import json
 # from PIL import ImageGrab
  
 # arduinoData = serial.Serial('COM10', 9600, timeout=.1)
@@ -24,23 +25,11 @@ nameRepeater = []
 nameList2 = []
 nameCheck = []
 timeIn = {}
-timeOut = {
-    "SIDDIQ" : 0,
-    "ALEEM" : 0,
-    "ANAM" : 0,
-    "ASHKAR" : 0,
-    "AYNA" : 0,
-    "CAROL" : 0,
-    "CLYDE" : 0,
-    "HUSAM" : 0,
-    "NABEEL" : 0,
-    "OMAR" : 0,
-    "REHAN" : 0,
-    "SIDRAH" : 0,
-    "SYED" : 0,
-    "TAREK" : 0,
-    "VALENTINA" : 0
-}
+
+
+with open('names.json') as f:
+    timeOut = json.load(f)
+print(timeOut)
 
 myList = os.listdir(path)
 print(myList)
