@@ -9,7 +9,6 @@ import time
 import json
 # from PIL import ImageGrab
  
-# arduinoData = serial.Serial('COM10', 9600, timeout=.1)
 tempList = []
 mList = []
 tCheck = []
@@ -52,8 +51,6 @@ def markAttendance(name):
     global textState
     textState = 1
 
-    start = time.perf_counter()
-
     with open('Attendance.csv','r+') as f:
         myDataList = f.readlines()
         nameList = []
@@ -89,23 +86,16 @@ def nameShow(text):
     elif textState == 1:
         cv2.putText(img, "DONE", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
         # textState = 0
-
         final = time.perf_counter()
 
         if final - start > 2:
             textState = 0
-
 
     elif textState == 2:    
         cv2.putText(img, "Your Temperature Is Too High!", (10,100), cv2.FONT_HERSHEY_COMPLEX, 1, (255,255,255), 2)
         # textState = 0
 
     
-def newTemp():
-    E = arduinoData.readline().decode().strip('\r\n')
-    return E
-
-
 encodeListKnown = findEncodings(images)
 print('Encoding Complete')
  
@@ -118,8 +108,7 @@ if cap.isOpened():
 arduinoData = serial.Serial('COM10', 9600, timeout=.1)
 
 while True:
-    # global tempCounts
-    # global textState
+
     success, img = cap.read()
     #img = captureScreen()
     imgS = cv2.resize(img,(0,0),None,0.25,0.25)
@@ -128,10 +117,6 @@ while True:
  
     facesCurFrame = face_recognition.face_locations(imgS)
     encodesCurFrame = face_recognition.face_encodings(imgS,facesCurFrame)
-
-    # arduinoData = serial.Serial('COM10', 9600, timeout=.1)
-    
-
 
 
     for encodeFace,faceLoc in zip(encodesCurFrame,facesCurFrame):
@@ -148,24 +133,19 @@ while True:
             cv2.rectangle(img,(x1,y2-35),(x2,y2),(0,255,0),cv2.FILLED)
             cv2.putText(img,name,(x1+6,y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
 
-
-
             if len(nameCheck) == 1:
                 start = time.perf_counter()
                 
             final = time.perf_counter()
-
-
             diff = final - start
-
             # print(diff)
+
+            if diff > 10:
+                nameCheck.clear()
 
             nameCheck.append(name)
             print(nameCheck)
             nameShow(name)
-
-            if diff > 10:
-                nameCheck.clear()
 
             if len(nameCheck) == 5:
                     numName = nameCheck.count(name)
