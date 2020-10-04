@@ -99,7 +99,7 @@ def nameShow(text):
 encodeListKnown = findEncodings(images)
 print('Encoding Complete')
  
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 if cap.isOpened():
     h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
@@ -147,6 +147,8 @@ while True:
             print(nameCheck)
             nameShow(name)
 
+            # print(timeIn)
+
             if len(nameCheck) == 5:
                     numName = nameCheck.count(name)
                     if numName == 5:
@@ -192,3 +194,4 @@ while True:
         break
     
     cv2.waitKey(1)
+    time.sleep(1)
