@@ -1,10 +1,13 @@
+#!/usr/bin/env python3
 
+from smbus2 import SMBus
+from mlx90614 import MLX90614
 import cv2
 import numpy as np
 import face_recognition
 import os
 from datetime import datetime
-import serial
+# import serial
 import time
 import json
 # from PIL import ImageGrab
@@ -101,11 +104,17 @@ print('Encoding Complete')
  
 cap = cv2.VideoCapture(1)
 
+# print(cap.isOpened())
+
+# if cap.isOpened() == False:
+#     cap = cv2.VideoCapture(0)
+
 if cap.isOpened():
     h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
     w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
 
-arduinoData = serial.Serial('COM10', 9600, timeout=.1)
+bus = SMBus(1)
+sensor = MLX90614(bus, address=0x5A)
 
 while True:
 
@@ -158,17 +167,19 @@ while True:
                         isWhat = 0
                         while isWhat == 0:
 
-                            E = arduinoData.readline().decode().strip('\r\n')
+                            # E = arduinoData.readline().decode().strip('\r\n')
+                            E = int(sensor.get_object_1())
+
                             # TEMP > 35
-                            if E == "1": 
+                            if E > 35: 
                                 print("High Temp")
                                 # tCheck.append(E)
                                 tCheck.clear()
-                            elif E == "2":
+                            elif E < 29:
                                 print("No Reading")
                                 # tCheck.append(E)
                                 tCheck.clear()
-                            elif E == "3":
+                            elif E >= 29 or E <= 35:
                                 # markAttendance(name)
                                 tCheck.append(E)
                                 print("Good to go")
