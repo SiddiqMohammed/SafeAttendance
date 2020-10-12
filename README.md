@@ -18,7 +18,7 @@ pip install opencv-contrib-python
 ## Usage
 
 Make a folder named "ImagesAttendance" where you will store your source images of the people you want to recognize the face of.
-
+Create a csv file named "Attendance.csv" in the same folder as the main.py file.
 
 
 
