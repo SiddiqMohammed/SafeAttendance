@@ -20,6 +20,8 @@ pip install opencv-contrib-python
 Make a folder named "ImagesAttendance" where you will store your source images of the people you want to recognize the face of.
 Create a csv file named "Attendance.csv" in the same folder as the main.py file.
 
+When a person is detected for 5 consecutive frames then the temperature is checked using the mlx9610 contactless temp sensor that is connected an arduino and the data is sent to the python code using serial communication.
+
 
 
 ## Contributing
